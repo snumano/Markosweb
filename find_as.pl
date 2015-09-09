@@ -35,7 +35,7 @@ use POSIX qw(strftime);
 use Data::Dumper;
 
 ### init ###
-my $hosting = "SAKURA+Internet+Inc.";
+my $hosting = "MKI+Network+Solutions";
 
 my $page;     # 全アプリ表示ページ　カウント用
 my $max_page = 240; 
@@ -77,7 +77,7 @@ print OUT "=====================================================================
 
 &analyze_list;
 
-print OUT "\nCOUNT:$i\n";
+#print OUT "\nCOUNT:$i\n";
 close(OUT);
 
 exit;
@@ -101,31 +101,30 @@ sub analyze_list{
 #	$mech->get("http://www.markosweb.com/hosting/media+exchange+co.,+inc./$page");
 	$mech->get("http://www.markosweb.com/hosting/${hosting}/");
     
-    print $mech->content;
+#    print $mech->content;
 
-	@content = split(/<p\sclass\="host_link">/,$mech->content); #レコード区切り文字を変更
-
+	@content = split(/<div\sclass\="host_info"/,$mech->content); #レコード区切り文字を変更
+#    print @content;
 
 	foreach(@content){
      	    print "\nNewSite\n" if($debug);
-     	    print if($debug);
 
-	    if(/http\:\/\/www\.markosweb\.com\/policy\//)
+	    if(/http\:\/\/www\.markosweb\.com\/policy\/|<head>/)
 	    {
 		next;
 	    }
-            
-	    if(/\/><a\shref\="(http\:\/\/www\.markosweb\.com\/.+)"\stitle\=/){
+
+     	    print if($debug);            
+	    if(/<a\shref\="(\/.+?)">.+<\/a>(.+?)<p\sclass\="tagged-as">/){
 		$markosweb_link = $1;  #link to markosweb.com
+                $markosweb_link = "http://www.markosweb.com".$markosweb_link;
 		print "MARKOS:$markosweb_link\n" if($debug);
-	    }
 
-	    if(/screen_shoot\sfill"\/>\r?\n?(\w.+\r?\n?.*?)\s*<\/a>\r?\n?/){
-
-		$site = $1;            #site name
+		$site = $2;            #site name
                 print "SITE1:$site\n" if($debug);
 		$site =~ s/[\r\n]//;          #不要な文字列を削除。(改行および、行頭と行末のスペース)
 		$site =~ s/^\s+//;
+                $site =~ s/^-\s*//;
 		$site =~ s/\s+$//;
                 if($site =~ /(.+?)<\//){
                     $site2 = $1;
@@ -135,12 +134,12 @@ sub analyze_list{
 
 	    }
 
-	    if(/<\/a><\/p><p>(.+?)<\/p><p>Tagged\sas/){
-		$remark = $1;          #remaks on markosweb.com
-                print "REMARK:$remark\n" if($debug);                
-	    }
+#	    if(/<\/a><\/p><p>(.+?)<\/p><p>Tagged\sas/){
+#		$remark = $1;          #remaks on markosweb.com
+#                print "REMARK:$remark\n" if($debug);                
+#	    }
 
-	    if(/<p><span\sclass\="site_url">(https?.+?)<\/span><\/p>/){
+	    if(/<span\sclass\="site_url\s?[\w]*">(https?.+?)<\/span><\/p>/){
 		$url = $1;             #link to site
 	        $url =~ s/(.+)\/$/$1/;
                 print "URL:$url\n" if($debug);
